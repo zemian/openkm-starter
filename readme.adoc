@@ -1,0 +1,67 @@
+= openkm-starter
+
+OpenKM is a document management system. It let you manage multiple
+version of any documents, TEXT, WORD DOCS, IMAGE etc. It also supports
+workflow and and many other automation tasks.
+
+https://github.com/openkm/document-management-system
+https://docs.openkm.com/kcenter/view/okm-6.3-com/
+https://www.openkm.com/en/download.html
+
+== Installation
+
+Didn't get he installer, but tried installing manually on Windows+Cgywin
+for with:
+
+* JDK 1.8
+* LibreOffice 6.2.0
+* OpenKM-6.3.6.zip from https://sourceforge.net/projects/openkm/files/6.3.6/
+* Tomcat-8.5.24.zip from https://sourceforge.net/projects/openkm/files/common/
+	NOTE: This tomcat contains many extra dependencies the app needs!
+
+* Optional if you want MySQL 8
+
+The default requires MySQL 5, but tested with MySQL8 and it works, but you
+need to use the newer JDBC Driver. If you miss this, you will get a error 
+for not able to get connection from MySQL with something like this:
+
+	java.lang.NullPointerException: null
+	at com.mysql.jdbc.ConnectionImpl.getServerCharset(ConnectionImpl.java:3005) ~[mysql-connector-java-5.1.38-bin.jar:5.1.38]
+
+See https://forum.openkm.com/viewtopic.php?t=21844
+
+You need to get MySQL 8 mysql-connector-java jar from https://search.maven.org/artifact/mysql/mysql-connector-java/8.0.15/jar
+
+=== Create database
+
+----
+CREATE DATABASE okmdb DEFAULT CHARACTER SET utf8 DEFAULT COLLATE utf8_bin;
+CREATE USER openkm@localhost IDENTIFIED BY 'openkm123';
+GRANT ALL ON okmdb.* TO openkm@localhost WITH GRANT OPTION;
+----
+
+=== Setup Tomcat
+
+1. Copy `mysql-connector-java-8.0.15.jar into` `Tomcat-8.5.24/lib`, and remove the version 5 one.
+2. Copy `OpenKM.war` to `Tomcat-8.5.24/webapps`
+3. Edit `Tomcat-8.5.24/OpenKM.cfg` with the following:
+----
+hibernate.dialect=org.hibernate.dialect.MySQL5InnoDBDialect
+hibernate.hbm2ddl=create
+system.openoffice.path=C:/Program Files/LibreOffice
+----
+4. Edit `Tomcat-8.5.24/conf/server.xml` with the following (disable old entry first):
+----
+<Resource name="jdbc/OpenKMDS" auth="Container" type="javax.sql.DataSource"
+            maxTotal="100" maxIdle="30" maxWaitMillis="10000" validationQuery="select 1"
+            username="openkm" password="openkm123" driverClassName="com.mysql.cj.jdbc.Driver"
+            url="jdbc:mysql://localhost:3306/okmdb"/>
+----
+
+=== Run and login to application
+
+Run `Tomcat-8.5.24/bin/catalina.bat run` then open http://localhost:8080
+
+Login with user `okmAdmin` and password `password`.
+
+NOTE: The `OpenKM.cfg` will get restore line `hibernate.hbm2ddl=create` to `hibernate.hbm2ddl=none`.
